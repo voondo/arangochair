@@ -56,6 +56,7 @@ class ArangoChair extends EventEmitter {
             } // if
 
             body = JSON.parse(body);
+            //console.log(body)
             let lastLogTick = body.state.lastLogTick;
             let start = 0;
             let idx   = 0;
@@ -87,8 +88,10 @@ class ArangoChair extends EventEmitter {
             };
 
             const ticktock = () => {
+              //console.log("tick tock")
                 if (this._stopped) return;
 
+                //console.log("req", `${this._loggerFollowPath}?from=${lastLogTick}`)
                 this.req.get({path:`${this._loggerFollowPath}?from=${lastLogTick}`}, (status, headers, body) => {
                     if (204 < status || 0 === status) {
                         this.emit('error', new Error('E_LOGGERFOLLOW'), status, headers, body);
@@ -96,11 +99,12 @@ class ArangoChair extends EventEmitter {
                         return;
                     } // if
 
+                    lastLogTick = headers['x-arango-replication-lasttick'];
+
                     if ('0' === headers['x-arango-replication-lastincluded']) {
+                        //console.log("last included == 0, waiting 500ms")
                         return setTimeout(ticktock, 500);
                     } // if
-
-                    lastLogTick = headers['x-arango-replication-lastincluded'];
 
                     start = idx = 0;
                     while(true) {
